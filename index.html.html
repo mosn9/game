@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>שומרי הרשת</title>
+<style>
+:root{--primary:#00ff88;--danger:#ff4444;--warn:#ffaa00;--dark:#0a0e1a;--card:#111827;--border:#1e3a5f;--text:#e2e8f0;--muted:#94a3b8;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--dark);color:var(--text);font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-size:16px;}
+.screen{display:none;position:fixed;inset:0;overflow-y:auto;padding:12px 12px 80px;}
+.screen.active{display:block;}
+#hud{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,14,26,.97);border-bottom:1px solid var(--border);padding:8px 12px;display:none;align-items:center;justify-content:space-between;gap:6px;}
+#hud.visible{display:flex;}
+.hud-item{display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--muted);}
+.hud-val{font-size:15px;font-weight:700;color:var(--primary);}
+#hint-btn{background:rgba(255,170,0,.15);border:1px solid var(--warn);color:var(--warn);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;}
+.game-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;width:100%;max-width:680px;margin:68px auto 0;}
+.mission-title{font-size:19px;font-weight:700;color:var(--primary);margin-bottom:8px;}
+.mission-story{color:var(--muted);line-height:1.65;margin-bottom:12px;font-size:14px;}
+.mission-task{background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.2);border-radius:8px;padding:12px;margin-bottom:12px;font-size:14px;line-height:1.65;}
+.option-card{background:#0d1b2e;border:2px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;font-size:14px;line-height:1.5;user-select:none;transition:border-color .15s;}
+.option-card.selected{border-color:var(--primary);background:rgba(0,255,136,.08);}
+.option-card:active{opacity:.8;}
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;}
+.btn-primary{background:var(--primary);color:#000;}
+.btn-secondary{background:transparent;border:2px solid var(--primary);color:var(--primary);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn:active{opacity:.75;}
+#screen-intro{background:radial-gradient(ellipse at center,#0d1b35 0%,var(--dark) 100%);}
+.intro-wrap{max-width:460px;margin:0 auto;padding:20px 0;text-align:center;}
+#video-container{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;margin-bottom:16px;position:relative;}
+#video-container iframe,#yt-player{position:absolute;top:0;left:0;width:100%!important;height:100%!important;border:none;}
+#intro-video{width:100%;height:100%;object-fit:cover;}
+.intro-logo{font-size:52px;margin-bottom:8px;}
+.intro-title{font-size:26px;font-weight:700;color:var(--primary);margin-bottom:6px;}
+.intro-sub{color:var(--muted);margin-bottom:22px;font-size:14px;}
+.team-input{background:#111827;border:2px solid var(--border);border-radius:10px;padding:13px;font-size:17px;color:var(--text);width:100%;text-align:center;margin-bottom:12px;}
+.team-input:focus{outline:none;border-color:var(--primary);}
+#feedback-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.87);align-items:center;justify-content:center;padding:20px;}
+#feedback-overlay.visible{display:flex;}
+.fb-box{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:460px;text-align:center;}
+.fb-icon{font-size:50px;margin-bottom:10px;}
+.fb-title{font-size:19px;font-weight:700;margin-bottom:8px;}
+.fb-hint-box{background:rgba(255,170,0,.1);border:1px solid var(--warn);border-radius:8px;padding:11px;margin-bottom:12px;color:var(--warn);font-size:13px;line-height:1.55;text-align:right;}
+.fb-msg{color:var(--muted);font-size:14px;margin-bottom:16px;text-align:right;}
+#hint-modal{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:20px;}
+#hint-modal.visible{display:flex;}
+.hint-box{background:var(--card);border:2px solid var(--warn);border-radius:14px;padding:22px;width:100%;max-width:440px;}
+.phone-mock{background:#0a0a0a;border:3px solid #333;border-radius:22px;padding:14px;max-width:320px;margin:0 auto 14px;}
+.phone-screen{background:#1a1a2e;border-radius:11px;padding:8px;}
+.msg-bubble{margin:6px 0;padding:9px 12px;border-radius:11px;font-size:13px;max-width:88%;line-height:1.45;}
+.msg-in{background:#1e3a5f;margin-right:auto;cursor:pointer;border:2px solid transparent;}
+.msg-in.selected{border-color:var(--danger);}
+.profile-card-game{background:#0d1b2e;border:2px solid var(--border);border-radius:11px;padding:14px;max-width:320px;margin:0 auto 14px;}
+.profile-clue{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:14px;}
+.profile-clue.selected{color:var(--danger);}
+.pwd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pwd-card{background:#0d1b2e;border:2px solid var(--border);border-radius:9px;padding:11px;cursor:pointer;font-family:monospace;font-size:13px;text-align:center;}
+.pwd-card.selected{border-color:var(--danger);}
+.news-item{background:#0d1b2e;border:2px solid var(--border);border-radius:9px;padding:12px;margin-bottom:8px;cursor:pointer;font-size:13px;line-height:1.5;}
+.news-item.selected{border-color:var(--danger);}
+.cipher-table{width:100%;border-collapse:collapse;margin:10px 0;}
+.cipher-table td,.cipher-table th{border:1px solid var(--border);padding:10px;text-align:center;font-size:17px;}
+.cipher-table th{background:#0d1b2e;font-size:12px;color:var(--muted);}
+.timer-big{font-size:42px;font-weight:700;color:var(--primary);text-align:center;font-family:monospace;margin:10px 0;}
+.code-input{background:#0d1b2e;border:2px solid var(--border);border-radius:9px;padding:13px;font-size:22px;color:var(--text);width:100%;text-align:center;font-family:monospace;letter-spacing:5px;}
+.code-input:focus{outline:none;border-color:var(--primary);}
+.codes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:7px;margin:12px 0;}
+.code-chip{background:#0d1b2e;border:1px solid var(--border);border-radius:8px;padding:9px;text-align:center;}
+.code-chip .lbl{font-size:9px;color:var(--muted);}
+.code-chip .val{font-size:18px;font-weight:700;color:var(--primary);}
+.final-code{font-size:28px;font-weight:700;color:var(--primary);letter-spacing:4px;text-align:center;background:#0d1b2e;border:2px solid var(--primary);border-radius:11px;padding:14px;margin:12px 0;word-break:break-all;}
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;width:100%;max-width:760px;margin:12px auto 0;}
+.admin-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;}
+.admin-table th{background:#0d1b2e;color:var(--primary);padding:8px 6px;text-align:right;font-size:11px;}
+.admin-table td{padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:top;}
+.admin-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+#qr-modal{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.92);align-items:center;justify-content:center;padding:20px;}
+#qr-modal.visible{display:flex;}
+.qr-box{background:var(--card);border-radius:15px;padding:22px;width:100%;max-width:360px;text-align:center;}
+#facilitator-card{display:none;position:fixed;inset:0;z-index:500;background:#fff;color:#111;overflow-y:auto;padding:20px;}
+.fc-wrap{max-width:580px;margin:0 auto;}
+.fc-title{font-size:17px;font-weight:700;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:6px;margin:14px 0 10px;}
+.fc-codes-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:8px 0;}
+.fc-code-cell{background:#f4f4f4;border:1px solid #ddd;border-radius:7px;padding:9px;}
+.fc-code-cell .fc-label{font-size:10px;color:#666;margin-bottom:3px;}
+.fc-code-cell .fc-val{font-size:22px;font-weight:700;color:#1a1a2e;}
+.fc-note{background:#fff3cd;border:1px solid #ffc107;border-radius:7px;padding:11px;margin:8px 0;font-size:13px;color:#333;line-height:1.5;}
+@media(max-width:480px){.mission-title{font-size:16px;}.game-card{padding:14px;}.timer-big{font-size:32px;}.final-code{font-size:20px;}}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="hud-item"><span class="hud-val" id="hud-mission">0</span><span>שכבה</span></div>
+  <div class="hud-item"><span class="hud-val" id="hud-score">0</span><span>נקודות</span></div>
+  <div class="hud-item"><span class="hud-val" id="hud-timer">00:00</span><span>זמן</span></div>
+  <button id="hint-btn" onclick="openHintModal()">💡 רמז</button>
+</div>
+
+<div id="screen-intro" class="screen active">
+  <div class="intro-wrap">
+    <div id="video-container" style="position:relative;background:#000;">
+      <iframe
+        src="https://drive.google.com/file/d/1pck-aEj19-G5r01HTART-2jM0lcMGH92/preview"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+        allow="autoplay"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <div class="intro-logo">🛡️</div>
+    <div class="intro-title">שומרי הרשת</div>
+    <div class="intro-sub">המשימה הדיגיטלית — 12 שכבות הגנה</div>
+    <input id="team-name-input" class="team-input" type="text" placeholder="שם הקבוצה שלכם...">
+    <button class="btn btn-primary" onclick="startGame()">🚀 התחילו את המשימה</button>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="openAdmin()">🔐 כניסת מנהל</button>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="openFacilitator()">📋 כרטיס מנחה</button>
+  </div>
+</div>
+
+<div id="screen-m0"  class="screen"><div class="game-card" id="m0-c"></div></div>
+<div id="screen-m1"  class="screen"><div class="game-card" id="m1-c"></div></div>
+<div id="screen-m2"  class="screen"><div class="game-card" id="m2-c"></div></div>
+<div id="screen-m3"  class="screen"><div class="game-card" id="m3-c"></div></div>
+<div id="screen-m4"  class="screen"><div class="game-card" id="m4-c"></div></div>
+<div id="screen-m5"  class="screen"><div class="game-card" id="m5-c"></div></div>
+<div id="screen-m6"  class="screen"><div class="game-card" id="m6-c"></div></div>
+<div id="screen-mp"  class="screen"><div class="game-card" id="mp-c"></div></div>
+<div id="screen-m7"  class="screen"><div class="game-card" id="m7-c"></div></div>
+<div id="screen-m8"  class="screen"><div class="game-card" id="m8-c"></div></div>
+<div id="screen-m9"  class="screen"><div class="game-card" id="m9-c"></div></div>
+<div id="screen-m10" class="screen"><div class="game-card" id="m10-c"></div></div>
+<div id="screen-m11" class="screen"><div class="game-card" id="m11-c"></div></div>
+
+<div id="screen-final" class="screen">
+  <div class="game-card" style="margin-top:16px;text-align:center;">
+    <div style="font-size:44px;margin-bottom:6px;">🏆</div>
+    <div class="mission-title" style="text-align:center;">משימה הושלמה!</div>
+    <div id="final-stars" style="font-size:32px;margin:8px 0;"></div>
+    <div id="final-score" style="font-size:20px;margin:6px 0;"></div>
+    <div id="final-time" style="color:var(--muted);margin-bottom:12px;font-size:14px;"></div>
+    <div style="font-weight:700;margin-bottom:6px;text-align:right;font-size:14px;">קודים שנאספו:</div>
+    <div id="codes-grid" class="codes-grid"></div>
+    <div class="final-code" id="final-code-display"></div>
+    <div id="final-summary" style="margin-bottom:10px;text-align:right;font-size:13px;"></div>
+    <button class="btn btn-primary" onclick="showQRModal()">📲 הצג QR למנחה</button>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="location.reload()">🔄 משחק חדש</button>
+  </div>
+</div>
+
+<div id="screen-admin" class="screen">
+  <div class="admin-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div class="mission-title">🖥️ לוח מנהל</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary" style="width:auto;padding:6px 12px;font-size:13px;" onclick="importMore()">📲 ייבא קבוצה</button>
+        <button class="btn btn-secondary" style="width:auto;padding:6px 12px;font-size:13px;" onclick="renderAdmin()">🔄 רענן</button>
+      </div>
+    </div>
+    <div id="admin-content"></div>
+    <button class="btn btn-danger" onclick="if(confirm('למחוק הכל?')){LS.set('teams',[]);renderAdmin();}" style="margin-top:14px;">🗑️ איפוס כל הנתונים</button>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="showScreen('screen-intro')">← חזרה</button>
+  </div>
+</div>
+
+<div id="feedback-overlay">
+  <div class="fb-box">
+    <div class="fb-icon" id="fb-icon"></div>
+    <div class="fb-title" id="fb-title"></div>
+    <div class="fb-hint-box" id="fb-hint" style="display:none;"></div>
+    <div class="fb-msg" id="fb-msg"></div>
+    <button class="btn btn-primary" onclick="closeFeedback()">המשך →</button>
+  </div>
+</div>
+
+<div id="hint-modal">
+  <div class="hint-box">
+    <h3 style="color:var(--warn);margin-bottom:10px;">💡 רמז</h3>
+    <div id="hint-text" style="font-size:14px;line-height:1.65;margin-bottom:10px;"></div>
+    <div id="hint-cost" style="color:var(--muted);font-size:12px;margin-bottom:14px;"></div>
+    <button class="btn btn-secondary" onclick="document.getElementById('hint-modal').classList.remove('visible')">סגור</button>
+  </div>
+</div>
+
+<div id="qr-modal">
+  <div class="qr-box">
+    <div style="font-size:17px;font-weight:700;color:var(--primary);margin-bottom:4px;" id="qr-team-name"></div>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:12px;" id="qr-score-disp"></div>
+    <canvas id="qr-canvas" width="240" height="240" style="background:#fff;border-radius:6px;display:block;margin:0 auto;"></canvas>
+    <div style="color:var(--muted);font-size:11px;margin-top:10px;line-height:1.6;">
+      סרקו עם מצלמת הטלפון/טאבלט של המנחה<br>
+      → כל הנתונים יועתקו אוטומטית ללוח המנהל
+    </div>
+    <button class="btn btn-secondary" style="margin-top:10px;" onclick="document.getElementById('qr-modal').classList.remove('visible')">סגור</button>
+  </div>
+</div>
+
+<div id="facilitator-card">
+  <button onclick="document.getElementById('facilitator-card').style.display='none'"
+    style="position:fixed;top:12px;left:12px;background:#c00;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:13px;cursor:pointer;z-index:999;">✕ סגור</button>
+  <div class="fc-wrap">
+    <h2 style="color:#1a1a2e;font-size:20px;margin-bottom:4px;">📋 כרטיס מנחה — שומרי הרשת</h2>
+    <div class="fc-note">⚠️ מיועד למנחה בלבד!</div>
+    <div class="fc-title">🔐 קודי השכבות</div>
+    <div class="fc-codes-grid">
+      <div class="fc-code-cell"><div class="fc-label">שכבה 0</div><div class="fc-val">4</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 1</div><div class="fc-val">3</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 2</div><div class="fc-val">4</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 3</div><div class="fc-val">8</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 4</div><div class="fc-val">4</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 5</div><div class="fc-val">3</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 6</div><div class="fc-val">4</div></div>
+      <div class="fc-code-cell" style="background:#e8f5e9;border-color:#4caf50;"><div class="fc-label" style="color:#388e3c;">📩 פיזית</div><div class="fc-val">3749</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 7</div><div class="fc-val">4</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 8</div><div class="fc-val">3</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 9</div><div class="fc-val">4</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 10</div><div class="fc-val">3</div></div>
+      <div class="fc-code-cell"><div class="fc-label">שכבה 11</div><div class="fc-val">4</div></div>
+    </div>
+    <div class="fc-title">📩 משימה פיזית</div>
+    <div class="fc-note">הדפיסו דף לכל קבוצה ושימו במעטפה. חלקו כשהטאבלט מבקש.</div>
+    <div style="background:#1a1a2e;border-radius:8px;padding:14px;margin:8px 0;color:#fff;">
+      <div style="color:#00ff88;font-weight:700;margin-bottom:8px;">טבלת הצפן:</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;text-align:center;font-size:16px;font-weight:700;">
+        <div>●=1</div><div>■=2</div><div>▲=3</div><div>◆=4</div><div>✦=7</div><div>★=9</div>
+      </div>
+      <div style="color:#aaa;font-size:13px;margin-top:8px;">הצופן על הדף: ▲ ✦ ◆ ★ → 3 7 4 9</div>
+    </div>
+    <div class="fc-title">💡 רמזים בעל פה</div>
+    <div style="font-size:13px;line-height:2;color:#222;">
+      <b>שכבה 0:</b> ספרו כמה פעמים מופיע 📱<br>
+      <b>שכבה 1:</b> מי מבקש קישור/סיסמה/פרס?<br>
+      <b>שכבה 2:</b> מה מזהה אתכם בעולם האמיתי?<br>
+      <b>שכבה 3:</b> פעולה שעוצרת + פעולה שמביאה עזרה<br>
+      <b>שכבה 4:</b> רצפים ומילים פשוטות = חלש<br>
+      <b>שכבה 5:</b> מה לא הגיוני לילד בגיל הזה?<br>
+      <b>שכבה 6:</b> GPS, שם משתמש, תמונה עם סמל, תאריך<br>
+      <b>פיזית:</b> ●=1 ■=2 ▲=3 ◆=4 ✦=7 ★=9<br>
+      <b>שכבה 7:</b> מקור אמין? הוכחה?<br>
+      <b>שכבה 8:</b> שנו ישירות באתר — לא קישורים<br>
+      <b>שכבה 9:</b> AI יכול לטעות — תמיד בדקו<br>
+      <b>שכבה 10:</b> גם שמירה = עבירה פלילית<br>
+      <b>שכבה 11:</b> חזרו על כל מה שלמדתם
+    </div>
+    <button onclick="window.print()" style="background:#1a1a2e;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;margin-top:14px;width:100%;">🖨️ הדפס</button>
+  </div>
+</div>
+
+<script>
+// ══ STORAGE ══════════════════════════════════════════
+var LS={
+  get:function(k,d){try{var v=localStorage.getItem(k);return v!=null?JSON.parse(v):(d!==undefined?d:null);}catch(e){return d!==undefined?d:null;}},
+  set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+
+// ══ CONSTANTS ════════════════════════════════════════
+var LABELS=['כניסה','פישינג','פרטיות','בריונות','סיסמאות','פרופיל','טביעות','פיזי','פייק ניוז','חשבונות','AI','תמונות','חידה'];
+var HINTS={
+  0:['ספרו רק את אייקון הטלפון 📱','יש 10 אייקונים — ספרו רק 📱','📱 מופיע 3 פעמים. קוד: 4'],
+  1:['חפשו הודעות שמנסות להלחיץ לפעול מהר','האם מבקשים קישור, סיסמה, או מבטיחים פרס?','המסוכנות: הפרס+קישור, בקשת הסיסמה, הזדמנות האייפון'],
+  2:['מה אדם זר לא צריך לדעת עליכם?','מידע שמזהה אתכם בעולם האמיתי = בעייתי','האסורים: כתובת, טלפון, שם ביה"ס+שעות, תמונה בבגד ים'],
+  3:['מה עוזר למי שנפגע?','פעולה שעוצרת הפגיעה + פעולה שמביאה עזרה','הנכונות: דיווח לפלטפורמה + ספירה למבוגר'],
+  4:['מילים פשוטות ורצפי מספרים = חלש','אם אפשר לנחש בקלות — זה חלש','החלשות: 123456, password, qwerty, iloveyou'],
+  5:['מה לא הגיוני לילד בגיל הזה?','פנים מוסתרות, בקשת סודיות, חיבור בשעות מוזרות','החשודים: פנים מוסתרות, "אל תספר להורים", מחובר כל הלילה'],
+  6:['מה מזהה אתכם?','GPS, שם משתמש, תמונה עם סמל = מזהה','הרגישים: GPS, שם משתמש, תמונה עם חולצה, תאריך לידה'],
+  7:['המקור ידוע? יש הוכחה?','הבטחות מוגזמות ללא מקור = חשד','המזויפות: וידאו+אלימות, שוקולד, חייזרים, מגנטים'],
+  8:['שנו ישירות באתר — לא קישורים','אל תשתמשו בקישור ממייל — הוא יכול להיות מזויף','הנכונים: שינוי סיסמה ישירות + דיווח + עדכון הורים'],
+  9:['AI יכול לטעות','Deepfake = תמונה/וידאו מזויפים שנוצרו ב-AI','הנכונים: Deepfake=מזויף, AI מוטה, חשוב לאמת'],
+  10:['גם שמירה = עבירה!','הפצה גורמת נזק אמיתי — תמיד לדווח למבוגר','לא שומרים, לא מעבירים — מוחקים ומדווחים למבוגר'],
+  11:['חזרו על כל מה שלמדתם','מה הפעולה הכי אחראית?','כל שאלה מסכמת שכבה אחת']
+};
+
+// ══ STATE ════════════════════════════════════════════
+var G={team:'',mission:0,score:0,startTime:null,timerInt:null,physInt:null,physSecs:240,codes:[],hintsUsed:{},attempts:{},m10idx:0,m11idx:0};
+var fbCb=null;
+
+// ══ UTILS ════════════════════════════════════════════
+function $(id){return document.getElementById(id);}
+function pad(n){return String(n).padStart(2,'0');}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var s=$(id);if(s){s.classList.add('active');s.scrollTop=0;}
+  $('hud').classList.toggle('visible',id.indexOf('screen-m')===0||id==='screen-mp');
+}
+function updateHUD(){
+  $('hud-mission').textContent=G.mission==='p'?'פיזית':G.mission;
+  $('hud-score').textContent=G.score;
+}
+function elapsed(){return G.startTime?Math.floor((Date.now()-G.startTime)/1000):0;}
+
+// ══ SAVE ═════════════════════════════════════════════
+function addCode(i,c){G.codes[i]=c;save();}
+function save(){
+  if(!G.team)return;
+  var d={name:G.team,score:G.score,mission:G.mission,elapsed:elapsed(),
+    hintsUsed:JSON.parse(JSON.stringify(G.hintsUsed)),
+    attempts:JSON.parse(JSON.stringify(G.attempts)),
+    savedAt:Date.now()};
+  LS.set('team_'+G.team,d);
+  var teams=LS.get('teams',[]);
+  if(teams.indexOf(G.team)<0)teams.push(G.team);
+  LS.set('teams',teams);
+}
+
+// ══ TIMER ════════════════════════════════════════════
+function startTimer(){
+  G.startTime=Date.now();
+  G.timerInt=setInterval(function(){
+    var s=elapsed();$('hud-timer').textContent=pad(Math.floor(s/60))+':'+pad(s%60);
+  },1000);
+}
+function stopTimer(){clearInterval(G.timerInt);}
+
+// ══ FEEDBACK — 2 chances ═════════════════════════════
+function showError(key,hint,answer,penalty,onAdvance){
+  penalty=penalty||10;
+  G.score=Math.max(0,G.score-penalty);
+  updateHUD();
+  if(!G.attempts[key])G.attempts[key]=0;
+  G.attempts[key]++;
+  var n=G.attempts[key];
+  save(); // שמור מיד
+  var ov=$('feedback-overlay');
+  $('fb-icon').textContent='❌';
+  $('fb-hint').style.display='block';
+  if(n===1){
+    // ניסיון ראשון: רמז בלבד, חוזרים לנסות
+    $('fb-title').textContent='לא מדויק — נסו שוב!';
+    $('fb-hint').textContent='💡 רמז: '+hint;
+    $('fb-msg').textContent='(-'+penalty+' נקודות) קראו את הרמז ונסו שוב.';
+    fbCb=function(){ov.classList.remove('visible');$('fb-hint').style.display='none';};
+  }else{
+    // ניסיון שני: תשובה + מתקדמים
+    $('fb-title').textContent='לא נכון — הנה התשובה:';
+    $('fb-hint').textContent='✅ '+answer;
+    $('fb-msg').textContent='(-'+penalty+' נקודות) ממשיכים לשכבה הבאה.';
+    fbCb=function(){ov.classList.remove('visible');$('fb-hint').style.display='none';if(onAdvance)onAdvance();};
+  }
+  ov.classList.add('visible');
+}
+function showSuccess(msg,pts,cb){
+  G.score+=pts;updateHUD();
+  $('fb-icon').textContent='✅';$('fb-title').textContent='נכון! כל הכבוד!';
+  $('fb-hint').style.display='none';
+  $('fb-msg').textContent=msg+(pts?' (+'+pts+' נקודות)':'');
+  fbCb=function(){$('feedback-overlay').classList.remove('visible');if(cb)cb();};
+  $('feedback-overlay').classList.add('visible');
+}
+function closeFeedback(){if(fbCb)fbCb();}
+
+// ══ HINT MODAL ═══════════════════════════════════════
+function openHintModal(){
+  var m=G.mission;
+  if(m==='p'){
+    $('hint-text').textContent='למשימה הפיזית אין רמזים דיגיטליים.';
+    $('hint-cost').textContent='';
+    $('hint-modal').classList.add('visible');
+    return;
+  }
+  var hints=HINTS[m];
+  if(!hints) return;
+  // מפתח תמיד כ-string
+  var key=String(m);
+  if(!G.hintsUsed[key]) G.hintsUsed[key]=0;
+  var idx=G.hintsUsed[key];
+  if(idx>=hints.length){
+    $('hint-text').textContent='השתמשתם בכל הרמזים לשכבה זו.';
+    $('hint-cost').textContent='';
+    $('hint-modal').classList.add('visible');
+    return;
+  }
+  var costs=[0,4,5];
+  var cost=costs[idx]||5;
+  G.hintsUsed[key]=idx+1; // שמור עם מפתח string
+  if(cost>0){G.score=Math.max(0,G.score-cost);updateHUD();}
+  $('hint-text').textContent=hints[idx];
+  $('hint-cost').textContent=cost?'עלות: -'+cost+' נקודות':'רמז ראשון — חינם!';
+  $('hint-modal').classList.add('visible');
+  save(); // שמור מיד
+}
+
+// ══ ADMIN ════════════════════════════════════════════
+function openAdmin(){
+  var p=prompt('סיסמת מנהל:');
+  if(p===null)return;
+  if(p==='1234'){renderAdmin();showScreen('screen-admin');}
+  else alert('סיסמה שגויה');
+}
+function openFacilitator(){
+  var p=prompt('סיסמת מנחה (1234):');
+  if(p===null)return;
+  if(p==='1234')$('facilitator-card').style.display='block';
+  else alert('סיסמה שגויה');
+}
+function renderAdmin(){
+  var teams=LS.get('teams',[]);
+  var cont=$('admin-content');
+  if(!teams.length){
+    cont.innerHTML='<p style="color:var(--muted);padding:16px;text-align:center;">אין קבוצות עדיין.</p>';
+    return;
+  }
+  var rows=[];
+  teams.forEach(function(t){var d=LS.get('team_'+t);if(d)rows.push(d);});
+  rows.sort(function(a,b){return b.score-a.score;});
+  var medals=['🥇','🥈','🥉'];
+  var html='<table class="admin-table"><thead><tr>'
+    +'<th>קבוצה</th><th>ניקוד</th><th>זמן</th><th>שכבה</th>'
+    +'<th>סה"כ רמזים</th><th>פירוט רמזים</th><th>שגיאות ב...</th>'
+    +'</tr></thead><tbody>';
+
+  rows.forEach(function(d,i){
+    var mm=Math.floor((d.elapsed||0)/60), ss2=(d.elapsed||0)%60;
+
+    // ── רמזים ──────────────────────────────────────────────
+    // hintsUsed נשמר כ: { "0":2, "3":1 } — מפתח=מספר שכבה, ערך=כמה רמזים
+    var totalH=0, hDet=[];
+    var hu=d.hintsUsed;
+    if(hu && typeof hu==='object'){
+      Object.keys(hu).forEach(function(k){
+        var cnt=parseInt(hu[k],10);
+        if(isNaN(cnt)||cnt<=0) return;
+        totalH+=cnt;
+        var missionNum=parseInt(k,10);
+        var lbl=(!isNaN(missionNum)&&LABELS[missionNum])?LABELS[missionNum]:('שכבה '+k);
+        hDet.push(lbl+' (×'+cnt+')');
+      });
+    }
+
+    // ── שגיאות ─────────────────────────────────────────────
+    // attempts נשמר כ: { "m0":1, "m1":2, "m10_0":1, "physical":1 }
+    var failed=[];
+    var att=d.attempts;
+    if(att && typeof att==='object'){
+      Object.keys(att).forEach(function(k){
+        var cnt=parseInt(att[k],10);
+        if(isNaN(cnt)||cnt<=0) return;
+        var label=null;
+        if(k==='physical'||k==='phys'){
+          label='פיזית';
+        } else {
+          var m=k.match(/^m(\d+)/);
+          if(m){
+            var idx2=parseInt(m[1],10);
+            label=LABELS[idx2]||('שכבה '+idx2);
+          }
+        }
+        if(label && failed.indexOf(label)<0) failed.push(label);
+      });
+    }
+
+    html+='<tr>'
+      +'<td style="font-weight:700;">'+(medals[i]||'')+(d.name||'?')+'</td>'
+      +'<td style="color:var(--primary);font-weight:700;text-align:center;">'+d.score+'</td>'
+      +'<td style="text-align:center;">'+pad(mm)+':'+pad(ss2)+'</td>'
+      +'<td style="text-align:center;">'+(d.mission==='p'?'פיזית':d.mission)+'</td>'
+      +'<td style="text-align:center;color:var(--warn);font-weight:700;">'+(totalH>0?totalH:'—')+'</td>'
+      +'<td style="color:var(--warn);font-size:11px;">'+(hDet.length?hDet.join(' | '):'—')+'</td>'
+      +'<td style="color:#ff8888;font-size:11px;">'+(failed.length?failed.join(', '):'✅ ללא')+'</td>'
+      +'</tr>';
+  });
+
+  html+='</tbody></table>'
+    +'<div style="margin-top:10px;font-size:11px;color:var(--muted);">* לחצו 🔄 רענן לעדכון הנתונים</div>';
+  cont.innerHTML=html;
+}
+
+// ══ הגדרת URL בסיס — שנה לכתובת GitHub Pages שלך ══
+// דוגמה: 'https://YOUR-USERNAME.github.io/shomrei-hareshet/'
+var BASE_URL = 'https://shomrei-hareshet.github.io/game/';
+// אם אין GitHub Pages — השאר ריק וה-QR יציג טקסט
+// var BASE_URL = '';
+
+// ══ QR ════════════════════════════════════════════════
+function showQRModal(){
+  save();
+  $('qr-team-name').textContent='👥 '+G.team;
+  var el=elapsed(),mm=Math.floor(el/60),ss=el%60;
+  $('qr-score-disp').textContent=G.score+' נקודות | זמן: '+pad(mm)+':'+pad(ss);
+  $('qr-modal').classList.add('visible');
+
+  var data={
+    n:G.team,
+    s:G.score,
+    m:typeof G.mission==='number'?G.mission:11,
+    t:el,
+    h:G.hintsUsed,
+    a:G.attempts
+  };
+  var enc=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+
+  // URL שנפתח ישירות בדפדפן הטלפון
+  var qrUrl = BASE_URL
+    ? BASE_URL+'?import=1&d='+enc
+    : 'SHOMRIM:'+enc;
+
+  var canvas=$('qr-canvas');
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,240,240);
+  ctx.fillStyle='#999';ctx.font='12px Arial';ctx.textAlign='center';
+  ctx.fillText('טוען QR...',120,120);
+
+  var img=new Image();
+  img.onload=function(){
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,240,240);
+    ctx.drawImage(img,10,10,220,220);
+  };
+  img.onerror=function(){
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,240,240);
+    ctx.fillStyle='#333';ctx.font='bold 12px Arial';ctx.textAlign='center';
+    ctx.fillText('אין אינטרנט',120,90);
+    ctx.font='11px Arial';ctx.fillStyle='#555';
+    ctx.fillText('הראו למנחה:',120,115);
+    ctx.fillStyle='#c00';ctx.font='bold 14px Arial';
+    ctx.fillText(G.team+' | '+G.score+'נק\'',120,140);
+    ctx.fillStyle='#555';ctx.font='11px Arial';
+    ctx.fillText('זמן: '+pad(mm)+':'+pad(ss),120,162);
+  };
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size=220x220&ecc=M&data='+encodeURIComponent(qrUrl);
+}
+
+// ══ URL IMPORT — כשמנחה סורק QR בטלפון ════════════════
+function checkURLImport(){
+  try{
+    var params=new URLSearchParams(location.search);
+    if(params.get('import')!=='1') return;
+    var raw=params.get('d');
+    if(!raw) return;
+    var data=JSON.parse(decodeURIComponent(escape(atob(raw))));
+    if(!data||!data.n) return;
+    // שמור נתוני הקבוצה
+    LS.set('team_'+data.n,{
+      name:data.n, score:data.s, mission:data.m, elapsed:data.t,
+      hintsUsed:data.h||{}, attempts:data.a||{}, savedAt:Date.now()
+    });
+    var teams=LS.get('teams',[]);
+    if(teams.indexOf(data.n)<0) teams.push(data.n);
+    LS.set('teams',teams);
+    // נקה URL
+    history.replaceState(null,'',location.pathname);
+    // בקש סיסמה ופתח מנהל
+    var pw=prompt('📥 התקבלו נתוני קבוצה:\n'+data.n+' — '+data.s+' נקודות\n\nסיסמת מנהל:');
+    if(pw==='1234'){ renderAdmin(); showScreen('screen-admin'); }
+    else showScreen('screen-intro');
+  }catch(e){ showScreen('screen-intro'); }
+}
+function startGame(){
+  var name=($('team-name-input').value||'').trim();
+  if(!name){alert('נא להזין שם קבוצה!');return;}
+  G.team=name;G.mission=0;G.score=0;G.codes=[];G.hintsUsed={};G.attempts={};G.m10idx=0;G.m11idx=0;
+  buildAll();startTimer();updateHUD();showScreen('screen-m0');
+}
+
+// ══ FINAL ════════════════════════════════════════════
+function showFinal(){
+  stopTimer();save();showScreen('screen-final');$('hud').classList.remove('visible');
+  var html='';G.codes.forEach(function(c,i){if(c==null)return;html+='<div class="code-chip"><div class="lbl">'+(LABELS[i]||i)+'</div><div class="val">'+c+'</div></div>';});
+  $('codes-grid').innerHTML=html;
+  $('final-code-display').textContent=G.codes.filter(function(c){return c!=null;}).join('')||'—';
+  $('final-score').textContent='ניקוד סופי: '+G.score+' נקודות';
+  var el=elapsed(),m=Math.floor(el/60),s=el%60;
+  $('final-time').textContent='זמן: '+pad(m)+':'+pad(s);
+  $('final-stars').textContent=G.score>=1100?'⭐⭐⭐':G.score>=900?'⭐⭐':G.score>=600?'⭐':'💪';
+  var failed=[];
+  Object.keys(G.attempts).forEach(function(k){
+    if((G.attempts[k]||0)===0)return;
+    var m2=k.match(/^m(\d+)/);
+    if(m2){var l=LABELS[parseInt(m2[1])];if(l&&failed.indexOf(l)<0)failed.push(l);}
+    if(k==='physical'&&failed.indexOf('פיזית')<0)failed.push('פיזית');
+  });
+  $('final-summary').innerHTML=failed.length
+    ?'<span style="color:var(--warn);">💡 שגיאות ב: </span><span style="color:var(--muted);">'+failed.join(', ')+'</span>'
+    :'<span style="color:var(--primary);">🎉 ללא שגיאות!</span>';
+}
+
+// ══ PHYSICAL ═════════════════════════════════════════
+function goToPhysical(){
+  G.mission='p';updateHUD();showScreen('screen-mp');G.physSecs=240;
+  function tick(){var el=$('phys-timer');if(el)el.textContent=pad(Math.floor(G.physSecs/60))+':'+pad(G.physSecs%60);}
+  tick();
+  clearInterval(G.physInt); // נקה טיימר קודם אם קיים
+  G.physInt=setInterval(function(){
+    G.physSecs--;tick();
+    if(G.physSecs<=0){
+      clearInterval(G.physInt);G.physInt=null;
+      G.score=Math.max(0,G.score-20);updateHUD();
+      showError('physical',
+        'בדקו את טבלת הצפן על המסך — כל סמל מייצג ספרה.',
+        'הצפן ▲✦◆★ מייצג 3-7-4-9. הקוד: 3749.',
+        0,function(){goM7();});
+    }
+  },1000);
+}
+function checkPhysical(){
+  var v=($('phys-input').value||'').trim();
+  if(v==='3749'){
+    clearInterval(G.physInt);
+    var bonus=Math.min(24,Math.floor(G.physSecs/10));
+    addCode(7,'3749');
+    showSuccess('פיצחתם! בונוס מהירות: +'+bonus,bonus+15,function(){goM7();});
+  }else{
+    showError('physical',
+      'בדקו את טבלת הצפן — כל סמל מייצג ספרה אחת. חפשו את הסמלים על הדף.',
+      'הצפן ▲✦◆★ מייצג 3-7-4-9. הקוד הנכון: 3749.',
+      10,function(){goM7();});
+  }
+}
+function goM7(){G.mission=7;updateHUD();showScreen('screen-m7');}
+
+// ══ BUILD ALL ════════════════════════════════════════
+function buildAll(){bM0();bM1();bM2();bM3();bM4();bM5();bM6();bMP();bM7();bM8();bM9();bM10();bM11();}
+
+// ─── M0 ──────────────────────────────────────────────
+function bM0(){
+  $('m0-c').innerHTML='<div class="mission-title">🔐 שכבה 0 — כניסה למערכת</div>'
+    +'<div class="mission-story">סוכנים! המערכת נעולה. פצחו את הדפוס הסודי!</div>'
+    +'<div class="mission-task">כמה פעמים מופיע 📱 ברצף?<br><br>'
+    +'<div style="font-size:22px;letter-spacing:5px;line-height:2.5;text-align:center;">🔒📱🔒🔒📱🔒🔒📱🔒🔒</div></div>'
+    +'<div id="m0-o"></div><button class="btn btn-primary" onclick="cM0()">✔ אמתו</button>';
+  mkRadio('m0-o',[{v:2,t:'2 פעמים'},{v:3,t:'3 פעמים'},{v:4,t:'4 פעמים'},{v:5,t:'5 פעמים'}]);
+}
+function cM0(){
+  var v=getRadio('m0-o');if(v===null){alert('בחרו תשובה!');return;}
+  if(v===3){addCode(0,4);showSuccess('נכון! 📱 מופיע 3 פעמים. קוד: 4',15,function(){G.mission=1;showScreen('screen-m1');updateHUD();});}
+  else showError('m0','ספרו רק את 📱 — כמה פעמים הוא מופיע?','📱 מופיע 3 פעמים. קוד: 4.',10,function(){addCode(0,4);G.mission=1;showScreen('screen-m1');updateHUD();});
+}
+
+// ─── M1 ──────────────────────────────────────────────
+var M1D=[
+  {id:'a',t:'היי! ראיתם שנרשמתם לתחרות 🎮 לחצו לקבלת הפרס: bit.ly/WIN-NOW',p:true},
+  {id:'b',t:'אמא: אל תשכח להביא את הגיטרה מחר!',p:false},
+  {id:'c',t:'⚠️ חשבונך יימחק! שלחו סיסמתכם לאימות: support@gamez-verif.ru',p:true},
+  {id:'d',t:'חבר: יש אימון כדורגל ביום שלישי בשעה 4',p:false},
+  {id:'e',t:'זכיתם באייפון! לחצו תוך 60 שניות לפני שהפרס יעבור 🎁',p:true}
+];
+function bM1(){
+  $('m1-c').innerHTML='<div class="mission-title">📡 שכבה 1 — מלכודת הלינקים</div>'
+    +'<div class="mission-story">סוכנים! הצל שלח הודעות מסוכנות. זהו את הודעות הפישינג!</div>'
+    +'<div class="mission-task">סמנו את כל הודעות הפישינג — יש בדיוק <b>3</b> הודעות מסוכנות:</div>'
+    +'<div class="phone-mock"><div class="phone-screen" id="m1-msgs"></div></div>'
+    +'<button class="btn btn-primary" onclick="cM1()">✔ אמתו</button>';
+  var w=$('m1-msgs');
+  M1D.forEach(function(m){
+    var d=document.createElement('div');
+    d.className='msg-bubble msg-in';d.dataset.id=m.id;d.textContent=m.t;
+    d.onclick=function(){d.classList.toggle('selected');};
+    w.appendChild(d);
+  });
+}
+function cM1(){
+  var sel=[].slice.call(document.querySelectorAll('#m1-msgs .msg-bubble.selected'))
+    .map(function(x){return x.dataset.id;}).sort().join(',');
+  var cor=M1D.filter(function(m){return m.p;}).map(function(m){return m.id;}).sort().join(',');
+  if(sel===cor){
+    addCode(1,3);
+    showSuccess('זיהיתם נכון את 3 הודעות הפישינג! קוד: 3',15,function(){G.mission=2;showScreen('screen-m2');updateHUD();});
+  }else{
+    showError('m1',
+      'חפשו: מי מבקש ללחוץ על קישור, לשלוח סיסמה, או מבטיח פרס מפתיע?',
+      'הפישינג: הפרס עם הקישור, בקשת הסיסמה, הזדמנות האייפון עם ספירה לאחור.',
+      10,function(){addCode(1,3);G.mission=2;showScreen('screen-m2');updateHUD();});
+  }
+}
+
+// ─── M2 ──────────────────────────────────────────────
+var M2D=[
+  {id:'a',t:'🏠 כתובת הבית שלי',f:true},{id:'b',t:'🎮 המשחק האהוב עליי',f:false},
+  {id:'c',t:'📞 מספר הטלפון של ההורים',f:true},{id:'d',t:'🎒 שם בית הספר ושעות הלימוד',f:true},
+  {id:'e',t:'🌈 הצבע האהוב עליי',f:false},{id:'f',t:'👙 תמונה שלי בבגד ים',f:true},
+  {id:'g',t:'🏫 שם בית הספר הישן שלי',f:false},{id:'h',t:'🐶 שם החיה שלי',f:false}
+];
+function bM2(){
+  $('m2-c').innerHTML='<div class="mission-title">🛑 שכבה 2 — מצוד הפרטיות</div>'
+    +'<div class="mission-story">סוכנים! הצל אוסף מידע. זהו מה אסור לפרסם!</div>'
+    +'<div class="mission-task">סמנו פרטים שאסור לשתף ברשת — יש בדיוק <b>4</b> פרטים כאלה:</div>'
+    +'<div id="m2-o"></div><button class="btn btn-primary" onclick="cM2()">✔ אמתו</button>';
+  mkCheckbox('m2-o',M2D,'t');
+}
+function cM2(){
+  var sel=getChecked('m2-o');
+  var cor=M2D.filter(function(i){return i.f;}).map(function(i){return i.id;}).sort().join(',');
+  if(sel===cor){addCode(2,4);showSuccess('מצוין! זיהיתם 4 פרטים אסורים! קוד: 4',15,function(){G.mission=3;showScreen('screen-m3');updateHUD();});}
+  else showError('m2','מה מזהה אתכם בעולם האמיתי — כתובת, טלפון, מיקום, גוף?','האסורים: כתובת הבית, טלפון ההורים, שם ביה"ס+שעות, תמונה בבגד ים.',10,function(){addCode(2,4);G.mission=3;showScreen('screen-m3');updateHUD();});
+}
+
+// ─── M3 ──────────────────────────────────────────────
+var M3D=[
+  {id:'a',t:'🤐 מתעלמים ולא מגיבים',sc:1},{id:'b',t:'👍 לייק על הפוסט הפוגע',sc:0},
+  {id:'c',t:'📢 מדווחים לפלטפורמה',sc:4},{id:'d',t:'😡 תגובה פוגעת חזרה',sc:0},
+  {id:'e',t:'👨‍👩‍👦 מספרים למבוגר אחראי',sc:4},{id:'f',t:'📸 שולחים הלאה',sc:0}
+];
+function bM3(){
+  $('m3-c').innerHTML='<div class="mission-title">🧠 שכבה 3 — אתגר הבריונות</div>'
+    +'<div class="mission-story">סוכנים! ראיתם פוסט פוגע על חבר. פעלו נכון!</div>'
+    +'<div class="mission-task">בחרו בדיוק <b>2</b> פעולות הטובות ביותר (מקסימום 8 נקודות):</div>'
+    +'<div id="m3-o"></div><button class="btn btn-primary" onclick="cM3()">✔ אמתו</button>';
+  mkLimit('m3-o',M3D,'t',2);
+}
+function cM3(){
+  var sels=ss('#m3-o .option-card.selected');
+  if(sels.length!==2){alert('בחרו בדיוק 2 פעולות!');return;}
+  var total=sels.reduce(function(s,el){return s+parseInt(el.dataset.sc);},0);
+  if(total>=8){addCode(3,8);showSuccess('מושלם! קוד: 8',15,function(){G.mission=4;showScreen('screen-m4');updateHUD();});}
+  else showError('m3','פעולה שעוצרת את הפגיעה + פעולה שמביאה עזרה','הנכונות: דיווח לפלטפורמה + ספירה למבוגר. קוד: 8.',10,function(){addCode(3,8);G.mission=4;showScreen('screen-m4');updateHUD();});
+}
+
+// ─── M4 ──────────────────────────────────────────────
+var M4D=[
+  {id:'a',pw:'123456',w:true},{id:'b',pw:'Tr0ub4dor!',w:false},
+  {id:'c',pw:'password',w:true},{id:'d',pw:'K#9mL@2vP',w:false},
+  {id:'e',pw:'qwerty',w:true},{id:'f',pw:'M@ngo$2024!',w:false},
+  {id:'g',pw:'iloveyou',w:true},{id:'h',pw:'R3$istance!',w:false}
+];
+function bM4(){
+  $('m4-c').innerHTML='<div class="mission-title">🔑 שכבה 4 — מבצר הסיסמאות</div>'
+    +'<div class="mission-story">סוכנים! זהו את הסיסמאות החלשות!</div>'
+    +'<div class="mission-task">סמנו סיסמאות חלשות — יש בדיוק <b>4</b>:</div>'
+    +'<div class="pwd-grid" id="m4-o"></div>'
+    +'<button class="btn btn-primary" onclick="cM4()" style="margin-top:10px;">✔ אמתו</button>';
+  var w=$('m4-o');
+  M4D.forEach(function(p){
+    var d=document.createElement('div');
+    d.className='pwd-card';d.dataset.id=p.id;d.textContent=p.pw;
+    d.onclick=function(){d.classList.toggle('selected');};
+    w.appendChild(d);
+  });
+}
+function cM4(){
+  var sel=[].slice.call(document.querySelectorAll('#m4-o .pwd-card.selected')).map(function(x){return x.dataset.id;}).sort().join(',');
+  var cor=M4D.filter(function(p){return p.w;}).map(function(p){return p.id;}).sort().join(',');
+  if(sel===cor){addCode(4,4);showSuccess('נכון! קוד: 4',15,function(){G.mission=5;showScreen('screen-m5');updateHUD();});}
+  else showError('m4','מילים נפוצות ורצפי מספרים = חלש','החלשות: 123456, password, qwerty, iloveyou. קוד: 4.',10,function(){addCode(4,4);G.mission=5;showScreen('screen-m5');updateHUD();});
+}
+
+// ─── M5 ──────────────────────────────────────────────
+var M5D=[
+  {id:'a',t:'גיל: 11',s:false},{id:'b',t:'תמונת פרופיל: פנים מוסתרות',s:true},
+  {id:'c',t:'שם משתמש: "SuperFriend_999"',s:true},{id:'d',t:'ביו: אוהב כדורגל ופיצה',s:false},
+  {id:'e',t:'"בוא נדבר בפרטי, אל תספר להורים"',s:true},{id:'f',t:'מחובר כל הלילה 2:00–5:00',s:true}
+];
+function bM5(){
+  $('m5-c').innerHTML='<div class="mission-title">🎭 שכבה 5 — מסכת הפרופיל</div>'
+    +'<div class="mission-story">סוכנים! חבר חדש ברשת נראה חשוד. זהו את הרמזים!</div>'
+    +'<div class="mission-task">סמנו רמזים חשודים — יש <b>3</b>:</div>'
+    +'<div class="profile-card-game"><div style="font-size:44px;text-align:center;margin-bottom:8px;">❓</div><div id="m5-o"></div></div>'
+    +'<button class="btn btn-primary" onclick="cM5()">✔ אמתו</button>';
+  var w=$('m5-o');
+  M5D.forEach(function(c){
+    var d=document.createElement('div');d.className='profile-clue';d.dataset.id=c.id;
+    d.innerHTML='<span>'+c.t+'</span><span>🚩</span>';
+    d.onclick=function(){d.classList.toggle('selected');};
+    w.appendChild(d);
+  });
+}
+function cM5(){
+  var sel=[].slice.call(document.querySelectorAll('#m5-o .profile-clue.selected')).map(function(x){return x.dataset.id;}).sort().join(',');
+  var cor=M5D.filter(function(c){return c.s;}).map(function(c){return c.id;}).sort().join(',');
+  if(sel===cor){addCode(5,3);showSuccess('זיהיתם 3 רמזים חשודים! קוד: 3',15,function(){G.mission=6;showScreen('screen-m6');updateHUD();});}
+  else showError('m5','מה לא הגיוני? פנים מוסתרות, סודיות, חיבור בשעות מוזרות','החשודים: פנים מוסתרות, "אל תספר", מחובר כל הלילה. קוד: 3.',10,function(){addCode(5,3);G.mission=6;showScreen('screen-m6');updateHUD();});
+}
+
+// ─── M6 ──────────────────────────────────────────────
+var M6D=[
+  {id:'a',t:'🍕 אוהב פיצה',s:false},{id:'b',t:'📍 GPS: בית הספר רמות',s:true},
+  {id:'c',t:'💬 שם המשתמש בכל הפלטפורמות',s:true},{id:'d',t:'🖼️ תמונה עם חולצת ביה"ס',s:true},
+  {id:'e',t:'🎵 ז\'אנר המוזיקה האהוב',s:false},{id:'f',t:'📅 תאריך הלידה המלא',s:true},
+  {id:'g',t:'🎨 הצבע האהוב',s:false}
+];
+function bM6(){
+  $('m6-c').innerHTML='<div class="mission-title">🧬 שכבה 6 — טביעת האצבע הדיגיטלית</div>'
+    +'<div class="mission-story">סוכנים! זהו מידע שמאפשר לזהות אתכם!</div>'
+    +'<div class="mission-task">סמנו פרטים רגישים — יש <b>4</b>:</div>'
+    +'<div id="m6-o"></div><button class="btn btn-primary" onclick="cM6()">✔ אמתו</button>';
+  mkCheckbox('m6-o',M6D,'t');
+}
+function cM6(){
+  var sel=getChecked('m6-o');
+  var cor=M6D.filter(function(d){return d.s;}).map(function(d){return d.id;}).sort().join(',');
+  if(sel===cor){addCode(6,4);showSuccess('מצוין! קוד: 4',15,function(){goToPhysical();});}
+  else showError('m6','GPS, שם משתמש, תמונה עם סמל, תאריך לידה = מזהה','הרגישים: GPS, שם משתמש, תמונה עם חולצה, תאריך לידה. קוד: 4.',10,function(){addCode(6,4);goToPhysical();});
+}
+
+// ─── MP ──────────────────────────────────────────────
+function bMP(){
+  $('mp-c').innerHTML='<div class="mission-title" style="color:#ff4444;">📩 משימה פיזית!</div>'
+    +'<div class="mission-story">סוכנים! עצרו — המנחה מחלק מעטפה סודית. פצחו את הקוד!</div>'
+    +'<div class="timer-big" id="phys-timer">04:00</div>'
+    +'<div class="mission-task"><b>מפתח הצפן:</b>'
+    +'<table class="cipher-table"><tr><th>●</th><th>■</th><th>▲</th><th>◆</th><th>✦</th><th>★</th></tr>'
+    +'<tr><td style="color:var(--primary);font-weight:700;">1</td><td style="color:var(--primary);font-weight:700;">2</td>'
+    +'<td style="color:var(--primary);font-weight:700;">3</td><td style="color:var(--primary);font-weight:700;">4</td>'
+    +'<td style="color:var(--primary);font-weight:700;">7</td><td style="color:var(--primary);font-weight:700;">9</td></tr></table>'
+    +'פצחו את הדף → הזינו את 4 הספרות:</div>'
+    +'<input id="phys-input" class="code-input" type="text" maxlength="4" placeholder="4 ספרות...">'
+    +'<button class="btn btn-primary" onclick="checkPhysical()" style="margin-top:10px;">✔ אמתו</button>';
+}
+
+// ─── M7 ──────────────────────────────────────────────
+var M7D=[
+  {id:'a',t:'🔴 משחקי וידאו גורמים לאלימות — מחקר חדש מוכיח!',f:true},
+  {id:'b',t:'🌍 מדענים: שינוי האקלים מעלה טמפרטורות הים',f:false},
+  {id:'c',t:'💊 שוקולד מרפא את כל המחלות!',f:true},
+  {id:'d',t:'📱 אפל הכריזה על אייפון חדש',f:false},
+  {id:'e',t:'👽 חוקרים אישרו קיום חייזרים — הממשלה מסתירה!',f:true},
+  {id:'f',t:'📚 משרד החינוך פרסם לוח חופשות לשנה"ל',f:false},
+  {id:'g',t:'💉 חיסון קורונה הפך אנשים למגנטים — פשוט נסו!',f:true},
+  {id:'h',t:'⚽ נבחרת ישראל עברה לגמר גביע אסיה',f:false}
+];
+function bM7(){
+  $('m7-c').innerHTML='<div class="mission-title">📰 שכבה 7 — פייק ניוז</div>'
+    +'<div class="mission-story">סוכנים! הצל מפיץ ידיעות כוזבות. זהו!</div>'
+    +'<div class="mission-task">סמנו ידיעות מזויפות — יש <b>4</b>:</div>'
+    +'<div id="m7-o"></div><button class="btn btn-primary" onclick="cM7()">✔ אמתו</button>';
+  var w=$('m7-o');
+  M7D.forEach(function(n){
+    var d=document.createElement('div');d.className='news-item';d.dataset.id=n.id;d.textContent=n.t;
+    d.onclick=function(){d.classList.toggle('selected');};
+    w.appendChild(d);
+  });
+}
+function cM7(){
+  var sel=[].slice.call(document.querySelectorAll('#m7-o .news-item.selected')).map(function(x){return x.dataset.id;}).sort().join(',');
+  var cor=M7D.filter(function(n){return n.f;}).map(function(n){return n.id;}).sort().join(',');
+  if(sel===cor){addCode(8,4);showSuccess('זיהיתם 4 ידיעות מזויפות! קוד: 4',15,function(){G.mission=8;showScreen('screen-m8');updateHUD();});}
+  else showError('m7','הבטחות מוגזמות ללא מקור = חשד','המזויפות: וידאו+אלימות, שוקולד, חייזרים, מגנטים. קוד: 4.',10,function(){addCode(8,4);G.mission=8;showScreen('screen-m8');updateHUD();});
+}
+
+// ─── M8 ──────────────────────────────────────────────
+var M8D=[
+  {id:'a',t:'📧 פותחים קישור במייל "אמת חשבונך"',ok:false},
+  {id:'b',t:'🔑 משנים סיסמה ישירות באתר הרשמי',ok:true},
+  {id:'c',t:'📢 מדווחים לפלטפורמה על הפריצה',ok:true},
+  {id:'d',t:'🤐 שומרים בסוד ולא מספרים להורים',ok:false},
+  {id:'e',t:'👨‍👩‍👦 מספרים מיד להורה אחראי',ok:true},
+  {id:'f',t:'🗑️ מוחקים חשבון ומתחילים מחדש',ok:false}
+];
+function bM8(){
+  $('m8-c').innerHTML='<div class="mission-title">🔐 שכבה 8 — הגנת חשבונות</div>'
+    +'<div class="mission-story">סוכנים! החשבון של רוני נפרץ. מה עושים?</div>'
+    +'<div class="mission-task">בחרו בדיוק <b>3</b> צעדים נכונים:</div>'
+    +'<div id="m8-o"></div><button class="btn btn-primary" onclick="cM8()">✔ אמתו</button>';
+  mkLimit('m8-o',M8D,'t',3);
+}
+function cM8(){
+  var sels=ss('#m8-o .option-card.selected');
+  if(sels.length!==3){alert('בחרו בדיוק 3 צעדים!');return;}
+  var allOk=sels.every(function(el){return el.dataset.ok==='true';});
+  if(allOk){addCode(9,3);showSuccess('נכון! קוד: 3',15,function(){G.mission=9;showScreen('screen-m9');updateHUD();});}
+  else showError('m8','שנו ישירות באתר — לא קישורים. אל תשתקו!','הנכונים: שינוי סיסמה ישירות + דיווח + עדכון הורים. קוד: 3.',10,function(){addCode(9,3);G.mission=9;showScreen('screen-m9');updateHUD();});
+}
+
+// ─── M9 ──────────────────────────────────────────────
+var M9D=[
+  {id:'a',t:'🤖 AI תמיד אומר אמת',ok:false},
+  {id:'b',t:'🎭 Deepfake = תמונה/וידאו מזויפים שנוצרו ב-AI',ok:true},
+  {id:'c',t:'🧠 AI חושב ומרגיש כמו בני אדם',ok:false},
+  {id:'d',t:'⚠️ AI יכול להיות מוטה ולהפיץ שגיאות',ok:true},
+  {id:'e',t:'✅ חשוב לאמת מידע מ-AI ממקורות נוספים',ok:true},
+  {id:'f',t:'🔒 AI לא יכול לשמש לפשעים',ok:false}
+];
+function bM9(){
+  $('m9-c').innerHTML='<div class="mission-title">🤖 שכבה 9 — בינה מלאכותית</div>'
+    +'<div class="mission-story">סוכנים! מה נכון לגבי AI?</div>'
+    +'<div class="mission-task">סמנו משפטים נכונים — יש <b>3</b>:</div>'
+    +'<div id="m9-o"></div><button class="btn btn-primary" onclick="cM9()">✔ אמתו</button>';
+  mkCheckbox('m9-o',M9D,'t');
+}
+function cM9(){
+  var sel=getChecked('m9-o');
+  var cor=M9D.filter(function(s){return s.ok;}).map(function(s){return s.id;}).sort().join(',');
+  if(sel===cor){addCode(10,4);showSuccess('מצוין! קוד: 4',15,function(){G.mission=10;showScreen('screen-m10');updateHUD();});}
+  else showError('m9','AI יכול לטעות. Deepfake = תוכן מזויף ב-AI.','הנכונים: Deepfake=מזויף, AI מוטה, חשוב לאמת. קוד: 4.',10,function(){addCode(10,4);G.mission=10;showScreen('screen-m10');updateHUD();});
+}
+
+// ─── M10 ─────────────────────────────────────────────
+var M10D=[
+  {q:'חבר שלח תמונה אינטימית של תלמידה. מה תעשו?',
+   o:[{id:'a',t:'🗑️ מוחקים מיד ולא מעבירים',ok:true},{id:'b',t:'📤 מעבירים לחבר קרוב',ok:false},
+      {id:'c',t:'💾 שומרים אבל לא מעבירים',ok:false},{id:'d',t:'👨‍👩‍👦 מוחקים ומספרים למבוגר',ok:true}],
+   cor:['a','d'],hint:'גם שמירה = עבירה פלילית!',ans:'מוחקים מיד + מספרים למבוגר. גם שמירה = עבירה!'},
+  {q:'חבר מפרסם תמונות פוגעות של מישהו. מה תעשו?',
+   o:[{id:'a',t:'🤐 מתעלמים',ok:false},{id:'b',t:'🚨 מדווחים לפלטפורמה',ok:true},
+      {id:'c',t:'😂 שולחים אימוג\'י',ok:false},{id:'d',t:'👨‍👩‍👦 מספרים למבוגר',ok:true}],
+   cor:['b','d'],hint:'התעלמות לא עוצרת את הפגיעה!',ans:'מדווחים + מספרים למבוגר. התעלמות לא מספיקה!'},
+  {q:'מאיימים: "שלם כסף או אפרסם תמונות שלך". מה תעשו?',
+   o:[{id:'a',t:'💸 משלמים',ok:false},{id:'b',t:'🔕 חוסמים ומחכים',ok:false},
+      {id:'c',t:'👨‍👩‍👦 מספרים מיד להורים',ok:true},{id:'d',t:'🚔 פונים למשטרה דרך ההורים',ok:true}],
+   cor:['c','d'],hint:'תשלום לא יעצור אותם!',ans:'מספרים להורים + פונים למשטרה. לא משלמים לעולם!'}
+];
+function bM10(){G.m10idx=0;rM10();}
+function rM10(){
+  var sc=M10D[G.m10idx];
+  $('m10-c').innerHTML='<div class="mission-title">🚨 שכבה 10 — הפצת תמונות ('+(G.m10idx+1)+'/'+M10D.length+')</div>'
+    +'<div class="mission-story">סוכנים! תרחיש רגיש — בחרו בדיוק 2 פעולות נכונות!</div>'
+    +'<div class="mission-task">'+sc.q+'</div>'
+    +'<div id="m10-o"></div><button class="btn btn-primary" onclick="cM10()">✔ אמתו</button>';
+  mkLimit('m10-o',sc.o,'t',2);
+}
+function cM10(){
+  var sc=M10D[G.m10idx];
+  var sels=ss('#m10-o .option-card.selected');
+  if(sels.length!==2){alert('בחרו בדיוק 2 פעולות!');return;}
+  var sel=sels.map(function(x){return x.dataset.id;}).sort().join(',');
+  var cor=sc.cor.slice().sort().join(',');
+      var key='m10_'+G.m10idx; // attempts key עבור שכבת הפצת תמונות
+  var adv=function(){if(G.m10idx<M10D.length-1){G.m10idx++;rM10();}else{addCode(11,3);G.mission=11;showScreen('screen-m11');updateHUD();}};
+  if(sel===cor){
+    if(G.m10idx<M10D.length-1){G.m10idx++;showSuccess('נכון!',10,function(){rM10();});}
+    else{addCode(11,3);showSuccess('השלמתם! קוד: 3',15,function(){G.mission=11;showScreen('screen-m11');updateHUD();});}
+  }else showError(key,sc.hint,sc.ans,10,adv);
+}
+
+// ─── M11 ─────────────────────────────────────────────
+var M11D=[
+  {q:'מה עושים כשמקבלים הודעת פישינג?',
+   o:['לוחצים על הקישור לבדיקה','מוחקים ומדווחים מיד','שולחים לחבר','מתעלמים בלבד'],ok:1,
+   hint:'פישינג = הונאה. מה הפעולה הבטוחה?',ans:'מוחקים ומדווחים מיד — לא לוחצים על קישורים!'},
+  {q:'מה מהבאים היא סיסמה חזקה?',
+   o:['שם הכלב שלי','123456','X#9kL@!2m','תאריך הלידה שלי'],ok:2,
+   hint:'ארוכה, מורכבת, עם אותיות+מספרים+סמלים.',ans:'X#9kL@!2m — ארוכה ומורכבת!'},
+  {q:'מה זה Deepfake?',
+   o:['וירוס מחשב','תמונה/וידאו מזויפים שנוצרו ב-AI','אפליקציית עריכה','סוג סיסמה'],ok:1,
+   hint:'Deep+Fake = תוכן מזויף שנוצר על ידי בינה מלאכותית.',ans:'תמונה/וידאו מזויפים שנוצרו על ידי AI.'},
+  {q:'חשבון נפרץ — מה הצעד הראשון הנכון?',
+   o:['לוחצים על קישור במייל','משנים סיסמה ישירות באתר הרשמי','ממתינים','מוחקים החשבון'],ok:1,
+   hint:'ישירות באתר — לא דרך קישורים!',ans:'משנים סיסמה ישירות באתר הרשמי.'},
+  {q:'ראיתם הפצת תמונות פוגעות — מה עושים?',
+   o:['שולחים לחבר','מתעלמים','מדווחים ומספרים למבוגר','שומרים כהוכחה'],ok:2,
+   hint:'מה עוצר ומביא עזרה אמיתית?',ans:'מדווחים לפלטפורמה ומספרים למבוגר.'}
+];
+function bM11(){G.m11idx=0;rM11();}
+function rM11(){
+  var q=M11D[G.m11idx];
+  $('m11-c').innerHTML='<div class="mission-title">🏁 שכבה 11 — חידת הסיום ('+(G.m11idx+1)+'/'+M11D.length+')</div>'
+    +'<div class="mission-story">סוכנים! השלב האחרון — הוכיחו שאתם שומרי הרשת!</div>'
+    +'<div class="mission-task">'+q.q+'</div>'
+    +'<div id="m11-o"></div><button class="btn btn-primary" onclick="cM11()">✔ אמתו</button>';
+  var w=$('m11-o');
+  q.o.forEach(function(text,i){
+    var d=document.createElement('div');
+    d.className='option-card';d.dataset.idx=i;d.textContent=text;
+    d.onclick=function(){document.querySelectorAll('#m11-o .option-card').forEach(function(x){x.classList.remove('selected');});d.classList.add('selected');};
+    w.appendChild(d);
+  });
+}
+function cM11(){
+  var s=document.querySelector('#m11-o .option-card.selected');
+  if(!s){alert('בחרו תשובה!');return;}
+  var q=M11D[G.m11idx],key='m11_'+G.m11idx;
+  var adv=function(){if(G.m11idx<M11D.length-1){G.m11idx++;rM11();}else{addCode(12,4);showFinal();}};
+  if(parseInt(s.dataset.idx)===q.ok){
+    if(G.m11idx<M11D.length-1){G.m11idx++;showSuccess('נכון!',10,function(){rM11();});}
+    else{addCode(12,4);showSuccess('מושלם! קוד: 4',15,function(){showFinal();});}
+  }else showError(key,q.hint,q.ans,10,adv);
+}
+
+// ══ HELPERS ══════════════════════════════════════════
+// Radio buttons (בחירה יחידה)
+function mkRadio(id,items){
+  var w=$(id);
+  items.forEach(function(item){
+    var d=document.createElement('div');
+    d.className='option-card';d.dataset.val=item.v;d.textContent=item.t;
+    d.onclick=function(){document.querySelectorAll('#'+id+' .option-card').forEach(function(x){x.classList.remove('selected');});d.classList.add('selected');};
+    w.appendChild(d);
+  });
+}
+function getRadio(id){
+  var s=document.querySelector('#'+id+' .option-card.selected');
+  return s?Number(s.dataset.val):null;
+}
+// Checkbox (בחירה מרובה חופשית)
+function mkCheckbox(id,arr,key){
+  var w=$(id);
+  arr.forEach(function(item){
+    var d=document.createElement('div');
+    d.className='option-card';d.dataset.id=item.id;d.textContent=item[key];
+    d.onclick=function(){d.classList.toggle('selected');};
+    w.appendChild(d);
+  });
+}
+function getChecked(id){
+  return [].slice.call(document.querySelectorAll('#'+id+' .option-card.selected')).map(function(x){return x.dataset.id;}).sort().join(',');
+}
+// Limit (בחירה עד מקסימום)
+function mkLimit(id,arr,key,max){
+  var w=$(id);
+  arr.forEach(function(item){
+    var d=document.createElement('div');
+    d.className='option-card';
+    d.dataset.id=item.id;
+    if(item.sc!==undefined)d.dataset.sc=item.sc;
+    if(item.ok!==undefined)d.dataset.ok=String(item.ok);
+    d.textContent=item[key];
+    d.onclick=function(){
+      var sels=document.querySelectorAll('#'+id+' .option-card.selected');
+      if(d.classList.contains('selected'))d.classList.remove('selected');
+      else if(sels.length<max)d.classList.add('selected');
+    };
+    w.appendChild(d);
+  });
+}
+function ss(q){return [].slice.call(document.querySelectorAll(q));}
+function selIds(q){return [].slice.call(document.querySelectorAll(q)).map(function(x){return x.dataset.id;}).sort().join(',');}
+
+// ══ INIT ═════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',function(){
+  buildAll();
+  checkURLImport(); // בדוק אם נפתח מסריקת QR
+  showScreen('screen-intro');
+  document.addEventListener('touchstart',function(){},{passive:true});
+});
+</script>
+</body>
+</html>
